@@ -36,7 +36,7 @@ class MainActivity : AppCompatActivity() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
 
                 launch {
-                    viewModel1.getvalueFlow().collect {
+                    viewModel1.getValueFlow().collect {
                         binding.tx13.text = it.toString()
                     }
                 }

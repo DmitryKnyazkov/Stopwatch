@@ -16,53 +16,49 @@ import kotlinx.coroutines.launch
 class ViewModelSW1 : ViewModel() {
 
     private val mutableValueFlow = MutableStateFlow(0)
-    val valueFlow: StateFlow<Int> = mutableValueFlow.asStateFlow()
 
     private val mutableConditionFlow = MutableStateFlow(false)
-    val cсonditionFlow: StateFlow<Boolean> = mutableConditionFlow.asStateFlow()
 
-    var counter = 0
+    private var counter = 0
 
-    var job: Job? = null
+    private var job: Job? = null
 
     fun startCounter() {
         if (job == null) {count()}
     }
 
-    fun pauseCounter() {
-
-        viewModelScope.launch {
-            if (job != null) {
-                job!!.cancel()
-                job = null
-            }
-            mutableConditionFlow.emit(false)
+    private suspend fun suspendPauseCounter() {
+        job?.run {
+            cancel()
+            job = null
         }
-
+        mutableConditionFlow.emit(false)
     }
+    fun pauseCounter() = viewModelScope.launch {suspendPauseCounter()}
 
-    fun count() {
+
+    private fun count() {
         job = viewModelScope.launch(Dispatchers.Default) {
             while (true) {
                 delay(1000)
                 counter++
                 mutableConditionFlow.emit(true)
                 mutableValueFlow.emit(counter)
-
             }
         }
     }
 
     fun resetCounter() {
-        counter = 0
         viewModelScope.launch {
+            suspendPauseCounter()
             mutableValueFlow.emit(counter)
             mutableConditionFlow.emit(false)
+            counter = 0
         }
     }
 
-    fun getvalueFlow(): StateFlow<Int> = valueFlow
-    fun getConditionFlow(): StateFlow<Boolean> = cсonditionFlow
+    fun getValueFlow(): StateFlow<Int> = mutableValueFlow.asStateFlow()
+    fun getConditionFlow(): StateFlow<Boolean> = mutableConditionFlow.asStateFlow()
 }
 
 
